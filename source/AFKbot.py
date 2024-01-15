@@ -801,7 +801,9 @@ class Helper:
     return pic_name
 
   def grabScreenshot():
-    for i in range(3):
+    with mss.mss() as sct:
+      monitor_count = len(sct.monitors)
+    for i in range(monitor_count):
       mss().shot(mon=i)
 
   def getTime():
