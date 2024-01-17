@@ -801,31 +801,6 @@ class Helper:
     cv2.imwrite(pic_name, image)
     return pic_name
 
-  # AI / DEEP LEARNING VERSION (BUG ASK CHATGPT)
-  #def detectAndDrawFaces(photo_file, output_file):
-  #  img = cv2.imread(photo_file)
-  #  face_net = cv2.dnn.readNetFromCaffe("deploy.prototxt", "res10_300x300_ssd_iter_140000.caffemodel")
-
-    # Resize the input image to match the model's expected size (300x300)
-  #  blob = cv2.dnn.blobFromImage(cv2.resize(img, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
-
-    # Set the input to the model
-  #  face_net.setInput(blob)
-
-    # Forward pass to obtain detections
-  #  detections = face_net.forward()
-
-  #  for i in range(0, detections.shape[2]):
-  #    confidence = detections[0, 0, i, 2]
-
-  #    if confidence > 0.5:
-  #      box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-  #      (startX, startY, endX, endY) = box.astype("int")
-  #      cv2.rectangle(img, (startX, startY), (endX, endY), (255, 0, 0), 2)
-
-    # Save the image with frames around faces
-  #  cv2.imwrite(output_file, img)
-  
   def detectAndDrawFaces(photo_file):
     img = cv2.imread(photo_file)
     face_cascade = cv2.CascadeClassifier('cascades/haarcascade_frontalface_default.xml')
