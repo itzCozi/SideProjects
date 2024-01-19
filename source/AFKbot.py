@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 import mss
 import cv2
+import psutil
 import asyncio
 import win32api
 import ctypes
@@ -16,6 +17,11 @@ from win32console import (
   GetStdHandle, KEY_EVENT, ENABLE_ECHO_INPUT,
   ENABLE_LINE_INPUT, ENABLE_PROCESSED_INPUT
 )
+
+# TODO
+'''
+* Look over all vars and functions
+'''
 
 
 # From my py-keyboard-class repo
@@ -823,6 +829,49 @@ class Helper:
     else:
       return f'ERROR: The input file: "{photo_file}" was unable to be replaced.'
 
+  def getResourceUsage():
+    cpu_percent = psutil.cpu_percent(interval=1)
+
+    mem = psutil.virtual_memory()
+    total_memory = mem.total
+    used_memory = mem.used
+    memory_percent = mem.percent
+
+    disk = psutil.disk_usage('/')
+    total_disk = disk.total
+    used_disk = disk.used
+    disk_percent = disk.percent
+
+    network = psutil.net_io_counters()
+    bytes_sent = network.bytes_sent
+    bytes_received = network.bytes_recv
+
+    mb = 1000000
+    gb = 1000000000
+
+    # This string cannot be indented!
+    return f'''
+```
+**********************************
+CPU:    {cpu_percent}%
+Disk:   {disk_percent}%
+Memory: {memory_percent}%
+
+------ Disk ------
+  Total: {round(total_disk/gb, 2)} GB
+  Used:  {round(used_disk/gb, 2)} GB
+
+------ Memory ------
+  Total: {round(total_memory/gb, 2)} GB
+  Used:  {round(used_memory/gb, 2)} GB
+
+------ Network ------
+  Megabytes Sent:     {round(bytes_sent/mb, 2)}
+  Megabytes Received: {round(bytes_received/mb, 2)}
+**********************************
+```
+'''
+
   def getDisplayCount():
     with mss.mss() as sct:
       monitor_count = len(sct.monitors)
@@ -873,7 +922,7 @@ async def background_task():
       Timer.hours += 1
       Timer.minutes = 0
 
-    msg = f'Bot Uptime: {Timer.hours:02}:{Timer.minutes:02}:{Timer.seconds:02}'
+    msg = f'Bot Uptime: {Timer.hours:02}:{Timer.minutes:02}.{Timer.seconds:02}'
     print(msg, end='\r')
 
 @bot.event
@@ -883,11 +932,10 @@ async def on_ready():
     print(f'* {guild.name} (ID: {guild.id})')
   print('STATUS: READY...\n')
 
-  helpMsg = '''
+  # NOT ALL FUNCTIONS ARE IN HERE DUE TO 2000 CHAR MESSAGE LIMIT
+  help_msg = '''
 |----------------|---------------------------------------------|-------|
 |     Command    |                  Description                |  Args |
-|----------------|---------------------------------------------|-------|
-| !ping          |  Returns the bot's current ping in MS       |  N/A  |
 |----------------|---------------------------------------------|-------|
 | !send-input    |  Presses then releases any keyboard key     |  key  |
 |----------------|---------------------------------------------|-------|
@@ -907,6 +955,8 @@ async def on_ready():
 |----------------|---------------------------------------------|-------|
 | !uptime        |  Returns host computer's uptime             |  N/A  |
 |----------------|---------------------------------------------|-------|
+| !get-usage     |  Prints computer's current resource usage   |  N/A  |
+|----------------|---------------------------------------------|-------|
 | !screenshot    |  Reply's with a screen shot of displays     |  N/A  |
 |----------------|---------------------------------------------|-------|
 | !webcam        |  Reply's with a shot of the webcam          |  N/A  |
@@ -916,10 +966,10 @@ async def on_ready():
   target_channel = bot.get_channel(1137852190933913741)
   if target_channel:
     await target_channel.send(f'AFK bot initialized... {Helper.getTime()}')
-    await target_channel.send(f'```{helpMsg}```')
+    await target_channel.send(f'```{help_msg}```')
   else:
     print(f'Channel with ID: "{target_channel}" not found.')
-  print(helpMsg)
+  print(help_msg)
   bot.loop.create_task(background_task())
 
 
@@ -930,8 +980,8 @@ async def ping(ctx):
 
 @bot.command(name='send-input', description='Sends an input to the computer')
 async def sendInput(ctx, key):
-  returnValue = Keyboard.pressAndReleaseKey(key)
-  if returnValue == 'null':
+  return_value = Keyboard.pressAndReleaseKey(key)
+  if return_value == 'null':
     await ctx.reply(
       'ERROR: Keyboard.pressAndReleaseKey() returned "null" meaning an error occurred during execution.'
     )
@@ -942,8 +992,8 @@ async def sendInput(ctx, key):
 
 @bot.command(name='press-mouse', description='Sends an input to the computer\'s mouse')
 async def sendMouseInput(ctx, key):
-  returnValue = Keyboard.pressAndReleaseMouse(key)
-  if returnValue == 'null':
+  return_value = Keyboard.pressAndReleaseMouse(key)
+  if return_value == 'null':
     await ctx.reply(
       'ERROR: Keyboard.pressAndReleaseMouse() returned "null" meaning an error occurred during execution.'
     )
@@ -953,7 +1003,16 @@ async def sendMouseInput(ctx, key):
 
 
 @bot.command(name='command', description='Pass a command to PC')
-async def passcmd(ctx, cmd):
+async def passcmd(ctx, *cmd):
+  cmd_list = []
+  for i in cmd:
+    cmd_list.append(i)
+
+  if cmd_list[0] == 'ps':
+    cmd_list[0] = 'powershell'
+  cmd = ' '.join(cmd_list)
+  await ctx.reply(cmd)
+
   out = os.popen(cmd).read()
   if out != '':
     await ctx.reply(out)
@@ -967,9 +1026,9 @@ async def sendString(ctx, *string):
     idx = string.index(currentWord)
     if idx + 1 != len(string):
       currentWord = currentWord + ' '  # Cause words are basicly arguments due to spaces :)
-    returnValue = Keyboard.keyboardWrite(currentWord)
+    return_value = Keyboard.keyboardWrite(currentWord)
 
-    if returnValue == 'null':
+    if return_value == 'null':
       await ctx.reply(
         'ERROR: Keyboard.keyboardWrite() returned "null" meaning an error occurred during execution.'
       )
@@ -990,9 +1049,9 @@ async def sendString(ctx, *string):
 
 @bot.command(name='scroll-mouse', description='Scrolls mouse and reply\'s with screenshot')
 async def scroll(ctx, direction, amount):
-  returnValue = Keyboard.scrollMouse(direction, amount)
+  return_value = Keyboard.scrollMouse(direction, amount)
 
-  if returnValue == 'null':
+  if return_value == 'null':
     await ctx.reply(
       'ERROR: Keyboard.scrollMouse() returned "null" meaning an error occurred during execution.'
     )
@@ -1035,6 +1094,12 @@ async def shutdown(ctx):
 async def uptime(ctx):
   time = Helper.getUptime()
   await ctx.reply(time)
+
+
+@bot.command(name='get-usage', description='Get computer resource usage')
+async def uptime(ctx):
+  string = Helper.getResourceUsage()
+  await ctx.reply(string)
 
 
 @bot.command(name='screenshot', description='Get a screenshot from the computer')
