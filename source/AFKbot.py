@@ -852,6 +852,7 @@ class Helper:
     # This string cannot be indented!
     return f'''
 ```
+
 **********************************
 CPU:    {cpu_percent}%
 Disk:   {disk_percent}%
@@ -869,6 +870,7 @@ Memory: {memory_percent}%
   Megabytes Sent:     {round(bytes_sent/mb, 2)}
   Megabytes Received: {round(bytes_received/mb, 2)}
 **********************************
+
 ```
 '''
 
@@ -909,9 +911,11 @@ async def background_task():
     hours = 0
 
   while True:
-    returnValue = Keyboard.pressAndReleaseKey('f15')
-    if returnValue == 'null':
-      print('Error: Keyboard.pressAndReleaseKey() returned "null" meaning an error occurred during execution.')
+    # CALL THIS EVERY 5 MINS (error prone)
+    if Timer.minutes % 5 == 0:
+      returnValue = Keyboard.pressAndReleaseKey('f15')
+      if returnValue == 'null':
+        print('Error: Keyboard.pressAndReleaseKey() returned "null" meaning an error occurred during execution.')
 
     await asyncio.sleep(1)
     Timer.seconds += 1
@@ -932,10 +936,9 @@ async def on_ready():
     print(f'* {guild.name} (ID: {guild.id})')
   print('STATUS: READY...\n')
 
-  # NOT ALL FUNCTIONS ARE IN HERE DUE TO 2000 CHAR MESSAGE LIMIT
   help_msg = '''
-|----------------|---------------------------------------------|-------|
-|     Command    |                  Description                |  Args |
+|----------------------------------------------------------------------|
+|     Command                     Description                    Args  |
 |----------------|---------------------------------------------|-------|
 | !send-input    |  Presses then releases any keyboard key     |  key  |
 |----------------|---------------------------------------------|-------|
@@ -966,7 +969,7 @@ async def on_ready():
   target_channel = bot.get_channel(1137852190933913741)
   if target_channel:
     await target_channel.send(f'AFK bot initialized... {Helper.getTime()}')
-    await target_channel.send(f'```{help_msg}```')
+    await target_channel.send(f'```{help_msg}```\nType: "!help"')
   else:
     print(f'Channel with ID: "{target_channel}" not found.')
   print(help_msg)
