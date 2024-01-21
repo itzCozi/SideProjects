@@ -4,6 +4,12 @@ import time
 import socket
 
 
+# TODO
+'''
+* Add linux commands such as default, secure, p2p and others
+'''
+
+
 class Globals:
   host_name = socket.gethostname()
   ip = socket.gethostbyname(host_name)
@@ -76,8 +82,8 @@ def connect_vpn(connect_opt: str = 'default') -> None:
   Connect to nordVPN
   '''
   # https://support.nordvpn.com/Connectivity/Linux/1325531132/Installing-and-using-NordVPN-on-Debian-Ubuntu-Raspberry-Pi-Elementary-OS-and-Linux-Mint.htm
-
   connect_opt = connect_opt.lower()
+
   if 'win' in sys.platform:
     exe_name = 'NordVPN.exe'
     connect_options = {
@@ -131,18 +137,14 @@ def arg_handler() -> None:
   except Exception:
     pass
 
-  connected_to_vpn = 'VPN OFF'
-
   match arg1:
 
     case '-c':
-      connected_to_vpn = 'VPN ON'
       if 'arg2' not in locals():
         arg2 = 'default'
       connect_vpn(arg2)
     
     case '-d':
-      connected_to_vpn = 'VPN OFF'
       print(f'Disconnecting from VPN...')
       disconnect_vpn()
     
@@ -155,7 +157,6 @@ def arg_handler() -> None:
       print(
         f'********************************** \
         \n >  {socket.gethostname()} is {status} \
-        \n >  Assumed Status: {connected_to_vpn} \
         \n >  IP Address: {Globals.getIP()} \
         \n**********************************'
       )
