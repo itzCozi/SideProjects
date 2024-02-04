@@ -1,5 +1,8 @@
 # My compile, run and print to terminal script for C and C++
 
+# HUGE TODO READ THIS
+# ADD EXCEPTION FOR "'gcc' is not recognized" AND cd TO THE MinGW PATH THEN EXECUTE COMMAND
+
 import os, sys
 import time
 import random
