@@ -15,7 +15,21 @@ class StoreData():
       if isinstance(value, str):
         value: str = f'"{value}"'
 
-      db.write(f'{key}: {value}\n')
+      db.write(f'{key}: {value},\n')
+  
+  
+  def delete_entry(key: str | int) -> None:
+    with open(StoreData.data_file, 'r') as db:
+      line_list: list = db.read().splitlines()
+
+    for line in line_list:
+      entry: str = line[:-1]
+      key_value: str = entry[:entry.find(':')]
+      if key_value.replace('"', '') == key:
+        line_list.remove(line)
+        with open(StoreData.data_file, 'w') as db:
+          db.write('\n'.join(line_list))
+  
   
   def fetch_value(key: str | int) -> str | int | None:
     with open(StoreData.data_file, 'r') as db:
@@ -31,6 +45,7 @@ class StoreData():
     value_end_idx: int = content.find('\n', value_start_idx)
     value: str = content[value_start_idx:value_end_idx].strip()
     return value.replace('"', '')
+  
   
   def fetch_key(value: str | int) -> str | int | None:
     with open(StoreData.data_file, 'r') as db:
@@ -48,6 +63,7 @@ class StoreData():
           return key.strip().strip('"')
     return None
 
+
   def get_keys() -> List[str]:
     with open(StoreData.data_file, 'r') as db:
       lines = db.readlines()
@@ -55,12 +71,25 @@ class StoreData():
 
     for line in lines:
       key_value = line.strip().split(':')
-      if len(key_value) == 2:
-        key = key_value[0].strip()
-        if key.startswith('"') and key.endswith('"'):
-          key = key[1:-1]
-        keys.append(key)
+      key = key_value[0].strip()
+      if key.startswith('"') and key.endswith('"'):
+        key = key[1:-1]
+      keys.append(key)
     return keys
+  
+  
+  def get_values() -> List[str]:
+    with open(StoreData.data_file, 'r') as db:
+      lines = db.readlines()
+    values: List[str] = []
+
+    for line in lines:
+      key_value = line.strip().split(':')
+      value = key_value[1].strip()
+      if value.startswith('"') and value.endswith('"'):
+        value = value[1:-1]
+      values.append(value)
+    return values
     
     
-print(StoreData.fetch_key('69'))
+print(StoreData.delete_entry('Cooper'))
