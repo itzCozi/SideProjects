@@ -3,10 +3,21 @@
 # HUGE TODO READ THIS
 # ADD EXCEPTION FOR "'gcc' is not recognized" AND cd TO THE MinGW PATH THEN EXECUTE COMMAND
 
-import os, sys
-import time
-import random
-from colorama import Fore, Back, Style
+try:
+  import os, sys
+  import time
+  import random
+  from colorama import Fore, Back, Style
+except ModuleNotFoundError as e:  # If you don't have a package installed
+  e = str(e)
+  idx = e.find('named')
+  missing_package = e[idx:].replace('named ', '').replace('\'', '')  # Epic, right?
+  print('-----------------------------------------------------------------------')
+  print(f'Package \'{missing_package}\' failed to import if you have Python installed \
+  \nyou can install the package by typing the below command into \'cmd\':')
+  print(f'pip install {missing_package}')
+  print('-----------------------------------------------------------------------')
+
 
 # CODE
 '''
@@ -64,6 +75,7 @@ class core:
         return vars.exit_code
       else:
         core.handleVArguments(arg_table)
+
 
   @staticmethod
   def determineArguments() -> dict:
@@ -140,6 +152,8 @@ class core:
         return vars.exit_code
     return file_map
 
+
+  @staticmethod
   def filterFileList(file_list: list) -> list:  # This small function is to filter stupid args
     """
     Removes arguments from file_list then returns new list
@@ -159,6 +173,8 @@ class core:
         file_list.remove(file)
     return file_list
 
+
+  @staticmethod
   def executeFileAndPrint(exe_path: str) -> None:  # Attempted to make once
     """
     Executes a file and prints the os.popen read output
@@ -211,6 +227,8 @@ class core:
       line_list.append('-')
     print(f'{Back.CYAN+Fore.WHITE} {"".join(line_list)} {Style.RESET_ALL}\n')
 
+
+  @staticmethod
   def handleVArguments(file_map: dict) -> None:
     """
     Handles hyphen arguments or '-' args
@@ -230,36 +248,6 @@ class core:
         print('Hello, World!')
         return vars.exit_code
 
-      if arg == '-gf':
-        color_list: list = [
-          Fore.BLUE, Fore.CYAN, Fore.GREEN, Fore.MAGENTA, Fore.RED,
-          Fore.YELLOW, Fore.WHITE
-        ]
-        ticker: int = random.randint(0, len(color_list) - 1)
-        char_count: int = -1
-        message: str = '!Feature Removed!'
-        print('\033[?25l', end='')
-
-        for i in range(100):  # Takes about 10 seconds
-          for char in message:
-            char_count += 1
-            ticker += 1
-            if ticker == len(color_list):
-              ticker: int = 0
-            color = color_list[ticker]  # This is a weird type
-            if char_count == len(message):
-              char_count: int = 0
-              print('\x1b[2K', end='')
-            else:
-              print(f'{color}{char}{Style.RESET_ALL}', end='')
-
-          print('\r', end='')
-          char_count: int = -1
-          ticker: int = random.randint(0, len(color_list) - 1)
-          time.sleep(0.2)
-        print('\033[?25h', end='')  # Shows cursor
-        return vars.exit_code
-
       if arg == '-msf':  # Multiple source files
         core.compileMultipleExecutables(file_map)
 
@@ -274,6 +262,8 @@ class core:
       if arg == '-obj':
         core.compileObject(file_map)
 
+
+  @staticmethod
   def determineCompiler(file_list: list) -> str:
     """
     Determines what compiler to use depending on source file
@@ -296,6 +286,8 @@ class core:
         compiler_type: str = 'gcc'
     return compiler_type
 
+
+  @staticmethod
   def compileCountdown(hide_cursor: bool = True) -> None:
     """
     Counts down till compile process and also prints the separator
@@ -320,6 +312,8 @@ class core:
       print('\033[?25h', end='')  # Shows cursor
     print('\x1b[2K', end='')
 
+
+  @staticmethod
   def outputCompileTime(total_compile_time: float | int, ticker: int) -> None:
     """
     Changes the color of the compile time if its a certain number
@@ -348,6 +342,8 @@ class core:
         f'\n({ticker}) file compilation took: {Fore.RED}{comp_time}{Style.RESET_ALL} seconds\n'
       )
 
+
+  @staticmethod
   def outputCompilerText(compiler_text: str, file_list: list, compiled_file: str) -> None:
     """
     Prints the completion text after attempted compilation
@@ -398,6 +394,8 @@ class core:
     else:
       print(compiler_text)
 
+
+  @staticmethod
   def compileMultipleExecutables(file_map: dict) -> list:
     """
     Turns a multiple .c or .cpp files into exe's and dll's
@@ -464,6 +462,8 @@ class core:
     print('-----------------------------------------------------------------')
     return compiled_files
 
+
+  @staticmethod
   def compileFiles(file_map: dict) -> str:
     """
     Compiles .c, .o, .h and .cpp files into executable's
@@ -511,6 +511,8 @@ class core:
     print('-----------------------------------------------------------------')
     return output_file
 
+
+  @staticmethod
   def compileObject(file_map: dict) -> str:
     """
     Turns a .c or .cpp file into a .o file
@@ -559,6 +561,8 @@ class core:
     # we must cd back then into the directory
     print(os.popen(command).read())
 
+
+  @staticmethod
   def compileDLL(file_map: dict) -> str:
     # I know this is a long function for only making like 3 sys calls with but this is
     # the legacy way of make .dll files (https://www.cygwin.com/cygwin-ug-net/dll.html)
@@ -634,4 +638,8 @@ class core:
     return output_file
 
 
-core.compilationCall()
+if __name__ == '__main__':  # Entry point
+  core.compilationCall()
+else:
+  print('This file cannot be imported...')
+  sys.exit(1)
