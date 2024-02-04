@@ -3,27 +3,29 @@
 # HUGE TODO READ THIS
 # ADD EXCEPTION FOR "'gcc' is not recognized" AND cd TO THE MinGW PATH THEN EXECUTE COMMAND
 
+
 try:
   import os, sys
   import time
-  import random
   from colorama import Fore, Back, Style
 except ModuleNotFoundError as e:  # If you don't have a package installed
-  e = str(e)
-  idx = e.find('named')
+  e: str = str(e)
+  idx: int = e.find('named')
   missing_package = e[idx:].replace('named ', '').replace('\'', '')  # Epic, right?
-  print('-----------------------------------------------------------------------')
-  print(f'Package \'{missing_package}\' failed to import if you have Python installed \
-  \nyou can install the package by typing the below command into \'cmd\':')
-  print(f'pip install {missing_package}')
-  print('-----------------------------------------------------------------------')
+  error_msg: str = f'Package \'{missing_package}\' failed to import if you have Python installed\nyou can install the package by typing the below command into \'cmd\':\n'
+  install_msg: str = f'pip install {missing_package}'
+  separator: list = []
+  for i in range(round(len(error_msg) / 2) + 3): separator.append('-')
+  separator: str = ''.join(separator)
+  print(f'{separator}\n{error_msg}\n{install_msg}\n{separator}')
+  sys.exit(1)
 
 
 # CODE
 '''
 * All references to 'exe' in comments mean executable
-* All functions use camelCase and variables use snake_case
 * All variable declarations must be type hinted EX: num: int = 0
+* All classes use CamelCase and variables / functions use snake_case
 * Most test files are .c because it compiles a couple seconds faster
 * If a function has parameters each variable must have specified types
 * Functions without any parameters in a class must have the @staticmethod tag
@@ -39,7 +41,7 @@ print the output of both files... (func: handleVArguments)
 '''
 
 
-class vars:
+class Globals:
 
   def error(error_type: str, var: str = None, type: str = None, runtime_error: str = None) -> None:
     if error_type == 'p':
@@ -53,32 +55,32 @@ class vars:
   exit_code: None = None  # Returned after an error
   C_compiler: str = r'c:\MinGW\bin\gcc.exe'
   CPP_compiler: str = r'c:\MinGW\bin\g++.exe'
-  varg_list: list = ['-gf', '-test', '-msf', '-out']
+  varg_list: list = ['-test', '-msf', '-out']
 
 
-class core:
+class Core:
   # Only can compile .o, .c, .cpp and .h
 
   @staticmethod
-  def compilationCall() -> None:
+  def compilation_call() -> None:
     """
     Initializes the program and calls correct compile option
     """
-    arg_table: dict = core.determineArguments()
+    arg_table: dict = Core.determine_arguments()
     if 'dll_name' in arg_table and 'arg1' not in arg_table:
-      core.compileDLL(arg_table)  # Single output file compile
+      Core.compile_DLL(arg_table)  # Single output file compile
     elif 'exe_name' in arg_table and 'arg1' not in arg_table:
-      core.compileFiles(arg_table)  # Also only one output
+      Core.compile_files(arg_table)  # Also only one output
     else:
       if 'arg1' not in arg_table:
         print(f'{Fore.RED}Neither "exe_name" or "dll_name" is in argument list.{Style.RESET_ALL}')
-        return vars.exit_code
+        return Globals.exit_code
       else:
-        core.handleVArguments(arg_table)
+        Core.handle_VArguments(arg_table)
 
 
   @staticmethod
-  def determineArguments() -> dict:
+  def determine_arguments() -> dict:
     """
     Puts all vargs into a map and return it for use
 
@@ -101,32 +103,32 @@ class core:
         if os.path.exists(arg):
           file_map[f'source_file{source_file_counter}']: str = arg
         else:
-          vars.error(error_type='r', runtime_error='A file argument cannot be found')
-          return vars.exit_code
+          Globals.error(error_type='r', runtime_error='A file argument cannot be found')
+          return Globals.exit_code
 
       elif arg.endswith('.c'):
         source_file_counter += 1
         if os.path.exists(arg):
           file_map[f'source_file{source_file_counter}']: str = arg
         else:
-          vars.error(error_type='r', runtime_error='A file argument cannot be found')
-          return vars.exit_code
+          Globals.error(error_type='r', runtime_error='A file argument cannot be found')
+          return Globals.exit_code
 
       elif arg.endswith('.o'):
         object_file_counter += 1
         if os.path.exists(arg) or arg_counter > 0:
           file_map[f'object_file{object_file_counter}']: str = arg
         else:
-          vars.error(error_type='r', runtime_error='A file argument cannot be found')
-          return vars.exit_code
+          Globals.error(error_type='r', runtime_error='A file argument cannot be found')
+          return Globals.exit_code
 
       elif arg.endswith('.h'):
         header_file_counter += 1
         if os.path.exists(arg):
           file_map[f'header_file{header_file_counter}']: str = arg
         else:
-          vars.error(error_type='r', runtime_error='A file argument cannot be found')
-          return vars.exit_code
+          Globals.error(error_type='r', runtime_error='A file argument cannot be found')
+          return Globals.exit_code
 
       elif arg.endswith('.exe'):
         exe_file_counter += 1
@@ -147,14 +149,14 @@ class core:
         file_map[f'arg{arg_counter}']: str = arg
 
     if exe_file_counter + dll_file_counter == 0:
-      if vars.DEV_MODE is not True:
+      if Globals.DEV_MODE is not True:
         print(f'{Fore.RED}No executable file name given to compile too.{Style.RESET_ALL}')
-        return vars.exit_code
+        return Globals.exit_code
     return file_map
 
 
   @staticmethod
-  def filterFileList(file_list: list) -> list:  # This small function is to filter stupid args
+  def filter_file_list(file_list: list) -> list:  # This small function is to filter stupid args
     """
     Removes arguments from file_list then returns new list
 
@@ -165,17 +167,17 @@ class core:
       list: The filtered list of file_list
     """
     if not isinstance(file_list, list):
-      vars.error(error_type='p', var='file_list', type='list')
-      return vars.exit_code
+      Globals.error(error_type='p', var='file_list', type='list')
+      return Globals.exit_code
 
     for file in file_list:
-      if file in vars.varg_list:
+      if file in Globals.varg_list:
         file_list.remove(file)
     return file_list
 
 
   @staticmethod
-  def executeFileAndPrint(exe_path: str) -> None:  # Attempted to make once
+  def execute_file_and_print(exe_path: str) -> None:  # Attempted to make once
     """
     Executes a file and prints the os.popen read output
 
@@ -183,8 +185,8 @@ class core:
       exe_path (str): The path to the executable file
     """
     if not isinstance(exe_path, str):
-      vars.error(error_type='p', var='exe_path', type='string')
-      return vars.exit_code
+      Globals.error(error_type='p', var='exe_path', type='string')
+      return Globals.exit_code
 
     exe_path: str = exe_path.replace('\\', '/')
     file_list: list = exe_path.split('/')
@@ -229,7 +231,7 @@ class core:
 
 
   @staticmethod
-  def handleVArguments(file_map: dict) -> None:
+  def handle_VArguments(file_map: dict) -> None:
     """
     Handles hyphen arguments or '-' args
 
@@ -237,8 +239,8 @@ class core:
       file_map (dict): The map of arguments passed
     """
     if not isinstance(file_map, dict):
-      vars.error(error_type='p', var='file_map', type='dict')
-      return vars.exit_code
+      Globals.error(error_type='p', var='file_map', type='dict')
+      return Globals.exit_code
 
     argument_list: list = [
       arg for key, arg in file_map.items() if 'arg' in key
@@ -246,25 +248,25 @@ class core:
     for arg in argument_list:
       if arg == '-test':
         print('Hello, World!')
-        return vars.exit_code
+        return Globals.exit_code
 
       if arg == '-msf':  # Multiple source files
-        core.compileMultipleExecutables(file_map)
+        Core.compile_multiple_executables(file_map)
 
       if arg == '-out':  # Runs compiled file
         # Only works with single file output no multi exe's or dll's
         if 'dll_name' in file_map and 'dll_name2' not in file_map:
-          exe_file: str = core.compileDLL(file_map)
+          exe_file: str = Core.compile_DLL(file_map)
         elif 'exe_name' in file_map and 'exe_name2' not in file_map:
-          exe_file: str = core.compileFiles(file_map)
-        core.executeFileAndPrint(exe_file)
+          exe_file: str = Core.compile_files(file_map)
+        Core.execute_file_and_print(exe_file)
 
       if arg == '-obj':
-        core.compileObject(file_map)
+        Core.compile_object(file_map)
 
 
   @staticmethod
-  def determineCompiler(file_list: list) -> str:
+  def determine_compiler(file_list: list) -> str:
     """
     Determines what compiler to use depending on source file
 
@@ -275,8 +277,8 @@ class core:
       str: 'gcc' for all .c files and 'g++' for .cpp files
     """
     if not isinstance(file_list, list):
-      vars.error(error_type='p', var='file_list', type='list')
-      return vars.exit_code
+      Globals.error(error_type='p', var='file_list', type='list')
+      return Globals.exit_code
 
     compiler_type: None = None
     for file in file_list:
@@ -288,7 +290,7 @@ class core:
 
 
   @staticmethod
-  def compileCountdown(hide_cursor: bool = True) -> None:
+  def compile_countdown(hide_cursor: bool = True) -> None:
     """
     Counts down till compile process and also prints the separator
 
@@ -296,8 +298,8 @@ class core:
       hide_cursor (bool): Hides cursor if is true
     """
     if not isinstance(hide_cursor, bool):
-      vars.error(error_type='p', var='hide_cursor', type='bool')
-      return vars.exit_code
+      Globals.error(error_type='p', var='hide_cursor', type='bool')
+      return Globals.exit_code
 
     if hide_cursor is True:
       print('\033[?25l', end='')  # Hides cursor
@@ -314,7 +316,7 @@ class core:
 
 
   @staticmethod
-  def outputCompileTime(total_compile_time: float | int, ticker: int) -> None:
+  def output_compile_time(total_compile_time: float | int, ticker: int) -> None:
     """
     Changes the color of the compile time if its a certain number
 
@@ -322,11 +324,11 @@ class core:
       total_compile_time (int): The total time compilation took
     """
     if not isinstance(total_compile_time, float | int):
-      vars.error(error_type='p', var='total_compile_time', type='float')
-      return vars.exit_code
+      Globals.error(error_type='p', var='total_compile_time', type='float')
+      return Globals.exit_code
     if not isinstance(ticker, int):
-      vars.error(error_type='p', var='ticker', type='integer')
-      return vars.exit_code
+      Globals.error(error_type='p', var='ticker', type='integer')
+      return Globals.exit_code
 
     comp_time: float = round(total_compile_time, 2)
     if total_compile_time < 1.5:
@@ -344,7 +346,7 @@ class core:
 
 
   @staticmethod
-  def outputCompilerText(compiler_text: str, file_list: list, compiled_file: str) -> None:
+  def output_compiler_text(compiler_text: str, file_list: list, compiled_file: str) -> None:
     """
     Prints the completion text after attempted compilation
 
@@ -354,14 +356,14 @@ class core:
       compiled_file (str): The compiled file's name
     """
     if not isinstance(file_list, list):
-      vars.error(error_type='p', var='file_list', type='list')
-      return vars.exit_code
+      Globals.error(error_type='p', var='file_list', type='list')
+      return Globals.exit_code
     if not isinstance(compiler_text, str):
-      vars.error(error_type='p', var='compiler_text', type='string')
-      return vars.exit_code
+      Globals.error(error_type='p', var='compiler_text', type='string')
+      return Globals.exit_code
     if not isinstance(compiled_file, str):
-      vars.error(error_type='p', var='compiled_file', type='string')
-      return vars.exit_code
+      Globals.error(error_type='p', var='compiled_file', type='string')
+      return Globals.exit_code
 
     if compiled_file.endswith('.exe'):
       compile_type: str = 'executable'.upper()
@@ -396,7 +398,7 @@ class core:
 
 
   @staticmethod
-  def compileMultipleExecutables(file_map: dict) -> list:
+  def compile_multiple_executables(file_map: dict) -> list:
     """
     Turns a multiple .c or .cpp files into exe's and dll's
 
@@ -407,8 +409,8 @@ class core:
       list: The compiled files path/name
     """
     if not isinstance(file_map, dict):
-      vars.error(error_type='p', var='file_map', type='dict')
-      return vars.exit_code
+      Globals.error(error_type='p', var='file_map', type='dict')
+      return Globals.exit_code
 
     file_list: list = list(file_map.values())
     passed_exe_files: list = []  # Passed .exe or .dll files
@@ -425,7 +427,7 @@ class core:
       elif file.endswith('.dll'):
         passed_exe_files.append(file)
 
-    core.compileCountdown()
+    Core.compile_countdown()
     total_compile_time: int = 0
     ticker: int = 0
 
@@ -449,7 +451,7 @@ class core:
       cmd_list.insert(0, compiler_type)
       command: str = ' '.join(cmd_list)
       compiler_return: str = os.popen(command).read()
-      core.outputCompilerText(compiler_return, source, exe_file)
+      Core.output_compiler_text(compiler_return, source, exe_file)
       et: float = time.time()
       compile_time: float = round(et - st, 2)
       total_compile_time += compile_time
@@ -458,13 +460,13 @@ class core:
       )
       compiled_files.append(exe_file)
 
-    core.outputCompileTime(total_compile_time, ticker)
+    Core.output_compile_time(total_compile_time, ticker)
     print('-----------------------------------------------------------------')
     return compiled_files
 
 
   @staticmethod
-  def compileFiles(file_map: dict) -> str:
+  def compile_files(file_map: dict) -> str:
     """
     Compiles .c, .o, .h and .cpp files into executable's
 
@@ -475,12 +477,12 @@ class core:
       str: The compiled files path/name
     """
     if not isinstance(file_map, dict):
-      vars.error(error_type='p', var='file_map', type='dict')
-      return vars.exit_code
+      Globals.error(error_type='p', var='file_map', type='dict')
+      return Globals.exit_code
 
     st: float = time.time()
     file_list: list = list(file_map.values())
-    compiler_type: str = core.determineCompiler(file_list)
+    compiler_type: str = Core.determine_compiler(file_list)
     cmd_list: list = []
 
     for file in file_list:
@@ -495,14 +497,14 @@ class core:
       elif file.endswith('.exe'):
         output_file: str = file
         cmd_list.append(file)
-    core.compileCountdown()
+    Core.compile_countdown()
 
     cmd_list.insert(-1, '-o')
     cmd_list.insert(0, compiler_type)
     command: str = ' '.join(cmd_list)
     compiler_return: str = os.popen(command).read()
-    file_list: list = core.filterFileList(file_list)
-    core.outputCompilerText(compiler_return, file_list, output_file)
+    file_list: list = Core.filter_file_list(file_list)
+    Core.output_compiler_text(compiler_return, file_list, output_file)
     et: float = time.time()
     compile_time: float = round(et - st - 3, 2)
     print(
@@ -513,7 +515,7 @@ class core:
 
 
   @staticmethod
-  def compileObject(file_map: dict) -> str:
+  def compile_object(file_map: dict) -> str:
     """
     Turns a .c or .cpp file into a .o file
 
@@ -524,12 +526,12 @@ class core:
       str: The compiled files path/name
     """
     if not isinstance(file_map, dict):
-      vars.error(error_type='p', var='file_map', type='dict')
-      return vars.exit_code
+      Globals.error(error_type='p', var='file_map', type='dict')
+      return Globals.exit_code
 
     st: float = time.time()
     file_list: list = list(file_map.values())
-    compiler_type: str = core.determineCompiler(file_list)
+    compiler_type: str = Core.determine_compiler(file_list)
     passed_files: list = []
     holding_list: list = []
     cmd_list: list = []
@@ -563,7 +565,7 @@ class core:
 
 
   @staticmethod
-  def compileDLL(file_map: dict) -> str:
+  def compile_DLL(file_map: dict) -> str:
     # I know this is a long function for only making like 3 sys calls with but this is
     # the legacy way of make .dll files (https://www.cygwin.com/cygwin-ug-net/dll.html)
     """
@@ -576,12 +578,12 @@ class core:
       str: The compiled files path/name
     """
     if not isinstance(file_map, dict):
-      vars.error(error_type='p', var='file_map', type='dict')
-      return vars.exit_code
+      Globals.error(error_type='p', var='file_map', type='dict')
+      return Globals.exit_code
 
     st: float = time.time()
     file_list: list = list(file_map.values())
-    compiler_type: str = core.determineCompiler(file_list)
+    compiler_type: str = Core.determine_compiler(file_list)
     passed_files: list = []
     holding_list: list = []
     cmd_list: list = []
@@ -603,7 +605,7 @@ class core:
       elif file.endswith('.c'):
         passed_files.append(file.replace('.c', '.o'))
         cmd_list.append(file.split('/')[-1])
-    core.compileCountdown()
+    Core.compile_countdown()
 
     cmd_list.insert(-1, '-c')
     cmd_list.insert(0, compiler_type)
@@ -627,8 +629,8 @@ class core:
     command: str = ' '.join(cmd_list)
     compiler_return: str = os.popen(command).read()
     os.remove(object_file)  # Therefore we only return the .dll
-    file_list: list = core.filterFileList(file_list)
-    core.outputCompilerText(compiler_return, file_list, output_file)
+    file_list: list = Core.filter_file_list(file_list)
+    Core.output_compiler_text(compiler_return, file_list, output_file)
     et: float = time.time()
     compile_time: float = round(et - st - 3, 2)
     print(
@@ -639,7 +641,7 @@ class core:
 
 
 if __name__ == '__main__':  # Entry point
-  core.compilationCall()
+  Core.compilation_call()
 else:
   print('This file cannot be imported...')
   sys.exit(1)
